@@ -44,7 +44,6 @@
         </div>
         <div id="state-indicator" class="small" aria-live="polite">Idle</div>
       </div>
-
       <div class="stats">
         <div class="stat">
           <div class="label">Total Logged</div>
@@ -55,250 +54,72 @@
           <div class="value" id="entry-count">0</div>
         </div>
       </div>
-
       <div class="controls">
-        <button id="startBtn" class="btn btn-start" title="Start timer" aria-label="Start timer">
-          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg> <span id="startLabel">Start</span>
-        </button>
-
-        <button id="stopBtn" class="btn btn-stop" title="Stop timer" style="display:none" aria-label="Stop timer">
-          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 6h12v12H6z"/></svg> <span id="stopLabel">Stop</span>
-        </button>
-
+        <button id="startBtn" class="btn btn-start" title="Start timer"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg> <span id="startLabel">Start</span></button>
+        <button id="stopBtn" class="btn btn-stop" title="Stop timer" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 6h12v12H6z"/></svg> <span id="stopLabel">Stop</span></button>
         <div id="live" class="small" aria-live="polite">—</div>
       </div>
-
-      <div id="error" class="error"></div>
-      <div class="hint">Tip: Use the Start/Stop buttons — the backend will update the card description for persistence.</div>
+      <div id="error" class="error" style="display:none;"></div>
+      <div class="hint">Note: Timer actions may take up to a minute to process.</div>
     </div>
   </div>
 
 <script>
-/*
-  JSONP-based Trello Power-Up card-back section.
-  - Replace WEB_APP_URL with your Apps Script exec URL (the /exec URL).
-  - The Apps Script must implement doGet JSONP handling and return JSONP callback.
-  - Backend should update the real Trello card description server-side; this UI stores a shared/local copy only.
-*/
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw7BOmy2vUZDZS6GS-MjVuXrjOK_Yt60cUHPwpBmCcRyilxOyl6GObn5I7JSSPmXEjZ/exec';
-const ZXC_BLOCK_START = '--- ZxC Sync ---';
-const ZXC_BLOCK_END = '--- /ZxC Sync ---';
+  const ZXC_BLOCK_START = '--- ZxC Sync ---';
+  const t = TrelloPowerUp.iframe();
+  let liveInterval = null;
 
-const t = TrelloPowerUp.iframe();
-let cardContext = { id:null, name:null, desc:null, shortLink:null };
-let liveInterval = null;
+  // --- UTILITIES ---
+  function formatTime(s){const h=String(Math.floor(s/3600)).padStart(2,'0'),m=String(Math.floor(s%3600/60)).padStart(2,'0'),c=String(Math.floor(s%60)).padStart(2,'0');return`${h}:${m}:${c}`}
+  function showError(m){const e=document.getElementById('error');e.textContent=m;e.style.display=m?'block':'none'}
+  function setLoading(l){document.getElementById('startBtn').disabled=l;document.getElementById('stopBtn').disabled=l}
+  function parseZxCBlock(text){if(!text)return null;const s=text.indexOf(ZXC_BLOCK_START);if(s===-1)return null;const n=text.substring(s+ZXC_BLOCK_START.length).trim(),o={};n.split(/\r?\n/).forEach(t=>{const n=t.match(/^([\w]+):\s*(.+)$/);n&&(o[n[1]]=n[2])});return o}
+  function updateUIState({running:r,startTimeIso:t}){document.getElementById('startBtn').style.display=r?'none':'inline-flex';document.getElementById('stopBtn').style.display=r?'inline-flex':'none';document.getElementById('state-indicator').innerHTML=r?'<span class="running-dot"></span>Running':'Idle';if(r&&t)startLiveTimer(t);else stopLiveTimer()}
+  function startLiveTimer(t){stopLiveTimer();if(!t)return;liveInterval=setInterval(()=>{const s=Math.floor((Date.now()-new Date(t).getTime())/1000);document.getElementById('live').textContent='Elapsed: '+formatTime(s)},1000)}
+  function stopLiveTimer(){if(liveInterval){clearInterval(liveInterval);liveInterval=null}document.getElementById('live').textContent='—'}
 
-// ---------- JSONP helper ----------
-function jsonpRpc(action, params = {}, timeout = 10000) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'zxc_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
-    const qs = new URLSearchParams(Object.assign({ action, callback: cbName }, params)).toString();
-    const script = document.createElement('script');
-    script.src = `${WEB_APP_URL}?${qs}`;
-    script.async = true;
-
-    let timer = setTimeout(() => {
-      cleanup();
-      reject(new Error('JSONP timeout'));
-    }, timeout);
-
-    function cleanup() {
-      clearTimeout(timer);
-      script.onerror = null;
-      script.onload = null;
-      if (script.parentNode) script.parentNode.removeChild(script);
-      try { delete window[cbName]; } catch(e) { window[cbName] = undefined; }
-    }
-
-    window[cbName] = (resp) => {
-      cleanup();
-      resolve(resp);
-    };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error('JSONP network error'));
-    };
-
-    document.head.appendChild(script);
-  });
-}
-
-// ---------- Utilities ----------
-function formatTime(totalSeconds) {
-  const h = String(Math.floor(totalSeconds / 3600)).padStart(2,'0');
-  const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2,'0');
-  const s = String(Math.floor(totalSeconds % 60)).padStart(2,'0');
-  return `${h}:${m}:${s}`;
-}
-function showError(msg) {
-  const el = document.getElementById('error');
-  if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
-  el.style.display = 'block';
-  el.textContent = msg;
-}
-function setLoading(isLoading) {
-  document.getElementById('startBtn').disabled = isLoading;
-  document.getElementById('stopBtn').disabled = isLoading;
-}
-
-// parse the ZxC block in the card description
-function parseZxCBlock(text) {
-  if (!text) return null;
-  const s = text.indexOf(ZXC_BLOCK_START);
-  const e = text.indexOf(ZXC_BLOCK_END);
-  if (s === -1 || e === -1) return null;
-  const inner = text.substring(s + ZXC_BLOCK_START.length, e).trim();
-  const out = {};
-  inner.split(/\r?\n/).forEach(line => {
-    const m = line.match(/^([\w]+):\s*(.+)$/);
-    if (m) out[m[1]] = m[2];
-  });
-  return out;
-}
-
-// update UI state (running: true/false, startTimeIso optional)
-function updateUIState({ running=false, startTimeIso=null }) {
-  document.getElementById('startBtn').style.display = running ? 'none' : 'inline-flex';
-  document.getElementById('stopBtn').style.display = running ? 'inline-flex' : 'none';
-  document.getElementById('state-indicator').innerHTML = running ? '<span class="running-dot"></span>Running' : 'Idle';
-  if (running && startTimeIso) startLiveTimer(startTimeIso); else stopLiveTimer();
-}
-
-function startLiveTimer(startIso) {
-  stopLiveTimer();
-  if (!startIso) return;
-  liveInterval = setInterval(() => {
-    const delta = Math.floor((Date.now() - new Date(startIso).getTime()) / 1000);
-    document.getElementById('live').textContent = 'Elapsed: ' + formatTime(delta);
-  }, 1000);
-}
-function stopLiveTimer() {
-  if (liveInterval) { clearInterval(liveInterval); liveInterval = null; }
-  document.getElementById('live').textContent = '—';
-}
-
-// ---------- Handlers ----------
-async function handleStartClick() {
-  setLoading(true);
-  showError('');
-  try {
-    const board = await t.board('name');
-    const params = {
-      source: 'trello',
-      entityId: cardContext.id,
-      title: cardContext.name || '',
-      description: cardContext.desc || '',
-      boardName: board && board.name ? board.name : ''
-    };
-    const resp = await jsonpRpc('start', params);
-    if (!resp || !resp.success) {
-      showError(resp && resp.message ? resp.message : 'Failed to start timer.');
-      setLoading(false);
-      return;
-    }
-    // backend returns newDescription (with ZxC block). We store it in Power-Up shared storage for recovery/viewing.
-    if (resp.newDescription) {
-      try {
-        await t.set('card','shared','zxc_description', resp.newDescription);
-        cardContext.desc = resp.newDescription;
-      } catch(e) {
-        // silently continue — storage may fail in some contexts
-        console.warn('Unable to write shared storage:', e && e.message);
-        cardContext.desc = resp.newDescription;
-      }
-    }
-    updateUIState({ running: true, startTimeIso: resp.timestamp || (resp.newBlock && resp.newBlock.TimestampStarted) || new Date().toISOString() });
-    // update summary if provided
-    if (resp.summary) {
-      document.getElementById('total-time').textContent = formatTime(resp.summary.totalDurationSeconds || 0);
-      document.getElementById('entry-count').textContent = resp.summary.entryCount || 0;
-    }
-  } catch (err) {
-    showError(err && err.message ? err.message : 'Unexpected error starting timer.');
-  } finally {
+  // --- HANDLERS (These now just set a flag in Power-Up data) ---
+  async function handleStartClick() {
+    setLoading(true);
+    await t.set('card', 'shared', 'zxc_action', { zxc_action: { action: 'start', timestamp: Date.now() } });
+    t.alert({ message: 'Start command sent! Processing shortly.', duration: 3 });
+    // Optimistically update the UI to feel instant
+    updateUIState({ running: true, startTimeIso: new Date().toISOString() });
     setLoading(false);
   }
-}
-
-async function handleStopClick() {
-  setLoading(true);
-  showError('');
-  try {
-    const params = {
-      entityId: cardContext.id,
-      description: cardContext.desc || ''
-    };
-    const resp = await jsonpRpc('stop', params);
-    if (!resp || !resp.success) {
-      showError(resp && resp.message ? resp.message : 'Failed to stop timer.');
-      setLoading(false);
-      return;
-    }
-    // backend may return cleanedDescription. store in shared storage
-    if (resp.cleanedDescription) {
-      try {
-        await t.set('card','shared','zxc_description', resp.cleanedDescription);
-        cardContext.desc = resp.cleanedDescription;
-      } catch(e) {
-        console.warn('Unable to write shared storage:', e && e.message);
-        cardContext.desc = resp.cleanedDescription;
-      }
-    }
+  async function handleStopClick() {
+    setLoading(true);
+    await t.set('card', 'shared', 'zxc_action', { zxc_action: { action: 'stop', timestamp: Date.now() } });
+    t.alert({ message: 'Stop command sent! Processing shortly.', duration: 3 });
+    // Optimistically update the UI
     updateUIState({ running: false });
-    if (resp.summary) {
-      document.getElementById('total-time').textContent = formatTime(resp.summary.totalDurationSeconds || 0);
-      document.getElementById('entry-count').textContent = resp.summary.entryCount || 0;
-    }
-  } catch (err) {
-    showError(err && err.message ? err.message : 'Unexpected error stopping timer.');
-  } finally {
     setLoading(false);
   }
-}
 
-// ---------- Initial render ----------
-t.render(async () => {
-  try {
-    // read card context
-    const card = await t.card('id','name','desc','shortLink');
-    cardContext = card || {};
-    document.getElementById('card-title').textContent = cardContext.name || 'Untitled';
-    document.getElementById('card-sub').textContent = 'card • ' + (cardContext.shortLink || '');
-
-    // Try to read any previously stored shared description (fallback)
+  // --- INITIAL RENDER ---
+  t.render(async () => {
     try {
-      const sharedDesc = await t.get('card','shared','zxc_description');
-      if (sharedDesc) cardContext.desc = sharedDesc;
-    } catch(e) {
-      // ignore
+      const card = await t.card('name', 'desc', 'shortLink');
+      document.getElementById('card-title').textContent = card.name || 'Untitled Card';
+      document.getElementById('card-sub').textContent = 'card • ' + (card.shortLink || '');
+      
+      const block = parseZxCBlock(card.desc);
+      updateUIState({ running: !!block, startTimeIso: block ? block.TimestampStarted : null });
+
+      // NOTE: With the trigger model, live summary data is not available.
+      // This data will be updated on the card description by the backend sync.
+      document.getElementById('total-time').textContent = '...';
+      document.getElementById('entry-count').textContent = '...';
+      
+      await t.sizeTo(document.body);
+    } catch (e) {
+      showError('Failed to render card details.');
     }
+  });
 
-    // detect running status from description block
-    const block = parseZxCBlock(cardContext.desc || card.desc || '');
-    if (block && block.ClockifyTimeEntryID) {
-      updateUIState({ running: true, startTimeIso: block.TimestampStarted || null });
-    } else {
-      updateUIState({ running: false });
-    }
-
-    // fetch summary (JSONP)
-    const summaryResp = await jsonpRpc('getSummary', { entityId: cardContext.id });
-    if (summaryResp && summaryResp.success && summaryResp.summary) {
-      document.getElementById('total-time').textContent = formatTime(summaryResp.summary.totalDurationSeconds || 0);
-      document.getElementById('entry-count').textContent = summaryResp.summary.entryCount || 0;
-    }
-
-    await t.sizeTo(document.body);
-  } catch (err) {
-    showError('Failed to initialize Power-Up. ' + (err && err.message ? err.message : ''));
-  }
-});
-
-// ---------- Wire buttons ----------
-document.getElementById('startBtn').addEventListener('click', handleStartClick);
-document.getElementById('stopBtn').addEventListener('click', handleStopClick);
-window.addEventListener('unload', () => { if (liveInterval) clearInterval(liveInterval); });
+  document.getElementById('startBtn').addEventListener('click', handleStartClick);
+  document.getElementById('stopBtn').addEventListener('click', handleStopClick);
+  window.addEventListener('unload', () => { if (liveInterval) clearInterval(liveInterval); });
 </script>
 </body>
 </html>
