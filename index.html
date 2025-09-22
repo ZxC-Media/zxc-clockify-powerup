@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ZxC Clockify Power-Up</title>
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <style>
+    /* Basic styling for our button */
+    button {
+      background-color: #0079BF;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #02609F;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // =====================================================================
+    //                            CONFIGURATION
+    // =====================================================================
+    const WEB_APP_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+    const ZXC_BLOCK_START = '--- ZxC Sync ---';
+
+    // =====================================================================
+    //                            POWER-UP LOGIC
+    // =====================================================================
+    
+    // Helper to determine if a timer is running based on the card description
+    const isTimerRunning = (desc) => {
+      return desc && desc.includes(ZXC_BLOCK_START);
+    };
+
+    // The main function that gets called when the user clicks our card button
+    const handleCardButtonClick = async (t, options) => {
+      try {
+        const card = await t.card('name', 'desc', 'id');
+        const board = await t.board('name');
+        const user = await t.member('email');
+
+        // Determine if we need to start or stop the timer
+        const action = isTimerRunning(card.desc) ? 'stop' : 'start';
+
+        t.showNotification({
+          message: `Sending ${action} command...`,
+          duration: 3
+        });
+
+        // Prepare the payload for our backend
+        const payload = {
+          action: action,
+          userEmail: user.email,
+          source: 'trello',
+          entityId: card.id,
+          title: card.name,
+          description: card.desc,
+          boardName: board.name
+        };
+
+        // Call our Apps Script backend
+        const response = await fetch(WEB_APP_URL, {
+          method: 'POST',
+          mode: 'no-cors', // Required for simple Apps Script web app calls
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        // Because of 'no-cors', we can't read the response directly.
+        // We'll just refresh the card to see the updated description from the backend.
+        // For a more advanced Power-Up, we'd handle the response properly.
+        t.showNotification({
+          message: `Clockify command sent! Refreshing card...`,
+          duration: 3
+        });
+
+        // This is a simple way to reflect the change; a full implementation
+        // would use the response to update the description.
+        // For now, let's just close the popup.
+        return t.closePopup();
+
+      } catch (error) {
+        console.error('Power-Up Error:', error);
+        t.alert({
+          message: 'An error occurred. Please check the console.',
+          duration: 5,
+        });
+      }
+    };
+    
+    // Trello Power-Up Initialization
+    TrelloPowerUp.initialize({
+      'card-buttons': function(t, options) {
+        return t.card('desc').then(function(card) {
+          const isRunning = isTimerRunning(card.desc);
+          return [{
+            icon: 'https://clockify.me/assets/images/clockify-logo-white-email.png',
+            text: isRunning ? 'Stop Timer' : 'Start Timer',
+            callback: handleCardButtonClick,
+            condition: 'edit'
+          }];
+        });
+      }
+    });
+
+  </script>
+</body>
+</html>
