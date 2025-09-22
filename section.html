@@ -1,35 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<base target="_top">
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<script src="https://p.trellocdn.com/power-up.min.js"></script>
-<title>ZxC Timer</title>
-<style>
-  :root{--bg:#ffffff;--muted:#6b7280;--accent:#0f766e;--accent-600:#0b6a64;--danger:#ef4444;--card-shadow:0 6px 18px rgba(15,23,42,0.06);--radius:10px;}
-  html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;background:transparent;color:#0f172a;-webkit-font-smoothing:antialiased;}
-  .container{padding:14px;width:320px;box-sizing:border-box;}
-  .card{background:var(--bg);border-radius:var(--radius);padding:12px;box-shadow:var(--card-shadow);border:1px solid rgba(15,23,42,0.04);}
-  .header{display:flex;gap:8px;align-items:center;justify-content:space-between;}
-  .title{display:flex;gap:10px;align-items:center;min-width:0;}
-  .project-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);flex:0 0 12px;box-shadow:0 1px 0 rgba(0,0,0,0.06) inset;}
-  .title h3{margin:0;font-size:14px;font-weight:600;line-height:1;color:#071133;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .subtitle{margin:0;font-size:12px;color:var(--muted);}
-  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
-  .stat{background:linear-gradient(180deg,rgba(250,250,251,1),rgba(243,244,246,1));border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start;}
-  .stat .label{font-size:11px;color:var(--muted);}
-  .stat .value{font-size:15px;font-weight:700;color:#0f172a;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,"Roboto Mono","Courier New",monospace;}
-  .controls{display:flex;gap:8px;margin-top:12px;align-items:center;justify-content:space-between;}
-  .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:none;font-weight:600;cursor:pointer;font-size:13px;box-shadow:0 4px 12px rgba(2,6,23,0.06);}
-  .btn:disabled{opacity:0.7;cursor:wait;transform:none;box-shadow:none;}
-  .btn-start{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:white;}
-  .btn-stop{background:#fff;color:var(--danger);border:1px solid rgba(239,68,68,0.12);}
-  .running-dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.28);display:inline-block;vertical-align:middle;margin-right:6px;}
-  .small{font-size:12px;color:var(--muted);}
-  .error{margin-top:10px;background:#fff7f7;border:1px solid #ffdede;color:#7c0b0b;padding:8px;border-radius:8px;font-size:12px;display:none;}
-  .hint{margin-top:8px;font-size:11px;color:var(--muted);}
-</style>
+  <meta charset="utf-8" />
+  <base target="_top">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <title>ZxC Timer</title>
+  <style>
+    :root{
+      --bg:#ffffff; --muted:#6b7280; --accent:#0f766e; --accent-600:#0b6a64;
+      --danger:#ef4444; --card-shadow:0 6px 18px rgba(15,23,42,0.06); --radius:10px;
+    }
+    html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto",sans-serif;background:transparent;color:#0f172a;-webkit-font-smoothing:antialiased;}
+    .container{padding:12px;width:100%;box-sizing:border-box;}
+    .card{background:var(--bg);border-radius:var(--radius);padding:12px;box-shadow:var(--card-shadow);border:1px solid rgba(15,23,42,0.04);width:100%;}
+    .header{display:flex;gap:12px;align-items:center;justify-content:space-between;}
+    .title{display:flex;gap:10px;align-items:center;min-width:0;flex:1;}
+    .project-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);flex:0 0 12px;box-shadow:0 1px 0 rgba(0,0,0,0.06) inset;}
+    .title h3{margin:0;font-size:15px;font-weight:700;line-height:1;color:#071133;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .subtitle{margin:0;font-size:12px;color:var(--muted);}
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+    .stat{background:linear-gradient(180deg,rgba(250,250,251,1),rgba(243,244,246,1));border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start;}
+    .stat .label{font-size:11px;color:var(--muted);}
+    .stat .value{font-size:15px;font-weight:700;color:#0f172a;font-family:ui-monospace,Menlo,monospace;}
+    .controls{display:flex;gap:8px;margin-top:12px;align-items:center;}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:none;font-weight:700;cursor:pointer;font-size:13px;box-shadow:0 6px 18px rgba(2,6,23,0.06);flex:1;justify-content:center;}
+    .btn:disabled{opacity:0.7;cursor:wait;box-shadow:none;}
+    .btn-start{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:white;}
+    .btn-stop{background:#fff;color:var(--danger);border:1px solid rgba(239,68,68,0.12);}
+    .state{font-size:12px;color:var(--muted);min-width:120px;text-align:right;}
+    .running-dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.28);display:inline-block;vertical-align:middle;margin-right:8px;}
+    .small{font-size:12px;color:var(--muted);}
+    .error{margin-top:10px;background:#fff7f7;border:1px solid #ffdede;color:#7c0b0b;padding:8px;border-radius:8px;font-size:12px;display:none;}
+  </style>
 </head>
 <body>
   <div class="container">
@@ -42,84 +45,165 @@
             <div class="subtitle" id="card-sub">Trello Card</div>
           </div>
         </div>
-        <div id="state-indicator" class="small" aria-live="polite">Idle</div>
+        <div id="state-indicator" class="state" aria-live="polite">Idle</div>
       </div>
-      <div class="stats">
+
+      <div class="stats" aria-hidden="false">
         <div class="stat">
           <div class="label">Total Logged</div>
-          <div class="value" id="total-time">--:--:--</div>
+          <div class="value" id="total-time">...</div>
         </div>
         <div class="stat">
           <div class="label">Entries</div>
-          <div class="value" id="entry-count">0</div>
+          <div class="value" id="entry-count">...</div>
         </div>
       </div>
-      <div class="controls">
-        <button id="startBtn" class="btn btn-start" title="Start timer"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg> <span id="startLabel">Start</span></button>
-        <button id="stopBtn" class="btn btn-stop" title="Stop timer" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 6h12v12H6z"/></svg> <span id="stopLabel">Stop</span></button>
-        <div id="live" class="small" aria-live="polite">—</div>
+
+      <div class="controls" role="group" aria-label="Timer controls">
+        <button id="startBtn" class="btn btn-start" title="Start timer" aria-label="Start timer">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+          <span id="startLabel">Start</span>
+        </button>
+        <button id="stopBtn" class="btn btn-stop" title="Stop timer" aria-label="Stop timer" style="display:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>
+          <span id="stopLabel">Stop</span>
+        </button>
       </div>
-      <div id="error" class="error" style="display:none;"></div>
-      <div class="hint">Note: Timer actions may take up to a minute to process.</div>
+
+      <div id="live" class="small" style="margin-top:10px">—</div>
+      <div id="error" class="error" role="alert"></div>
     </div>
   </div>
 
 <script>
   const ZXC_BLOCK_START = '--- ZxC Sync ---';
+  const ZXC_BLOCK_END = '--- /ZxC Sync ---';
   const t = TrelloPowerUp.iframe();
   let liveInterval = null;
+  let cardContext = { id: null, name: null, desc: null, shortLink: null };
 
-  // --- UTILITIES ---
-  function formatTime(s){const h=String(Math.floor(s/3600)).padStart(2,'0'),m=String(Math.floor(s%3600/60)).padStart(2,'0'),c=String(Math.floor(s%60)).padStart(2,'0');return`${h}:${m}:${c}`}
-  function showError(m){const e=document.getElementById('error');e.textContent=m;e.style.display=m?'block':'none'}
-  function setLoading(l){document.getElementById('startBtn').disabled=l;document.getElementById('stopBtn').disabled=l}
-  function parseZxCBlock(text){if(!text)return null;const s=text.indexOf(ZXC_BLOCK_START);if(s===-1)return null;const n=text.substring(s+ZXC_BLOCK_START.length).trim(),o={};n.split(/\r?\n/).forEach(t=>{const n=t.match(/^([\w]+):\s*(.+)$/);n&&(o[n[1]]=n[2])});return o}
-  function updateUIState({running:r,startTimeIso:t}){document.getElementById('startBtn').style.display=r?'none':'inline-flex';document.getElementById('stopBtn').style.display=r?'inline-flex':'none';document.getElementById('state-indicator').innerHTML=r?'<span class="running-dot"></span>Running':'Idle';if(r&&t)startLiveTimer(t);else stopLiveTimer()}
-  function startLiveTimer(t){stopLiveTimer();if(!t)return;liveInterval=setInterval(()=>{const s=Math.floor((Date.now()-new Date(t).getTime())/1000);document.getElementById('live').textContent='Elapsed: '+formatTime(s)},1000)}
-  function stopLiveTimer(){if(liveInterval){clearInterval(liveInterval);liveInterval=null}document.getElementById('live').textContent='—'}
+  // helpers
+  function formatHHMMSS(totalSeconds) {
+    const hh = String(Math.floor(totalSeconds / 3600)).padStart(2,'0');
+    const mm = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2,'0');
+    const ss = String(totalSeconds % 60).padStart(2,'0');
+    return `${hh}:${mm}:${ss}`;
+  }
 
-  // --- HANDLERS (These now just set a flag in Power-Up data) ---
+  function formatTimeFromDiff(diffMs) {
+    if (diffMs < 0) diffMs = 0;
+    return formatHHMMSS(Math.floor(diffMs / 1000));
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error');
+    if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function setLoading(isLoading) {
+    document.getElementById('startBtn').disabled = isLoading;
+    document.getElementById('stopBtn').disabled = isLoading;
+  }
+
+  function parseZxCBlock(text) {
+    if (!text) return null;
+    const s = text.indexOf(ZXC_BLOCK_START);
+    const e = text.indexOf(ZXC_BLOCK_END);
+    if (s === -1 || e === -1) return null;
+    const inner = text.substring(s + ZXC_BLOCK_START.length, e).trim();
+    const obj = {};
+    inner.split(/\r?\n/).forEach(line => {
+      const m = line.match(/^([\w]+):\s*(.+)$/);
+      if (m) obj[m[1]] = m[2];
+    });
+    return obj;
+  }
+
+  function startLiveTimer(startIso) {
+    if (liveInterval) clearInterval(liveInterval);
+    if (!startIso) return;
+    liveInterval = setInterval(() => {
+      const delta = Math.floor((Date.now() - new Date(startIso).getTime()) / 1000);
+      document.getElementById('live').textContent = 'Elapsed: ' + formatHHMMSS(delta);
+    }, 1000);
+  }
+  function stopLiveTimer() {
+    if (liveInterval) { clearInterval(liveInterval); liveInterval = null; }
+    document.getElementById('live').textContent = '—';
+  }
+
+  function updateUIFromBlock(block) {
+    const running = !!(block && block.ClockifyTimeEntryID);
+    document.getElementById('startBtn').style.display = running ? 'none' : 'inline-flex';
+    document.getElementById('stopBtn').style.display = running ? 'inline-flex' : 'none';
+    document.getElementById('state-indicator').innerHTML = running ? '<span class="running-dot"></span>Running' : 'Idle';
+    if (running && block.TimestampStarted) startLiveTimer(block.TimestampStarted);
+    else stopLiveTimer();
+  }
+
+  // Start: set pluginData flag (backend webhook/trigger will process it)
   async function handleStartClick() {
     setLoading(true);
-    await t.set('card', 'shared', 'zxc_action', { zxc_action: { action: 'start', timestamp: Date.now() } });
-    t.alert({ message: 'Start command sent! Processing shortly.', duration: 3 });
-    // Optimistically update the UI to feel instant
-    updateUIState({ running: true, startTimeIso: new Date().toISOString() });
-    setLoading(false);
+    showError('');
+    try {
+      // store a nested object so the webhook's pluginData parsing (parsedValue.zxc_action) finds it
+      await t.set('card', 'shared', 'zxc_action', { zxc_action: { action: 'start', timestamp: Date.now() } });
+      t.alert({ message: 'Start sent — backend will process shortly.', duration: 4 });
+      // optimistic UI update
+      updateUIFromBlock({ ClockifyTimeEntryID: true, TimestampStarted: new Date().toISOString() });
+    } catch (err) {
+      showError('Failed to send start command.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
+
+  // Stop: set pluginData flag
   async function handleStopClick() {
     setLoading(true);
-    await t.set('card', 'shared', 'zxc_action', { zxc_action: { action: 'stop', timestamp: Date.now() } });
-    t.alert({ message: 'Stop command sent! Processing shortly.', duration: 3 });
-    // Optimistically update the UI
-    updateUIState({ running: false });
-    setLoading(false);
+    showError('');
+    try {
+      await t.set('card', 'shared', 'zxc_action', { zxc_action: { action: 'stop', timestamp: Date.now() } });
+      t.alert({ message: 'Stop sent — backend will process shortly.', duration: 4 });
+      // optimistic UI update
+      updateUIFromBlock(null);
+    } catch (err) {
+      showError('Failed to send stop command.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  // --- INITIAL RENDER ---
-  t.render(async () => {
+  // initial render
+  t.render(async function() {
     try {
-      const card = await t.card('name', 'desc', 'shortLink');
-      document.getElementById('card-title').textContent = card.name || 'Untitled Card';
-      document.getElementById('card-sub').textContent = 'card • ' + (card.shortLink || '');
-      
-      const block = parseZxCBlock(card.desc);
-      updateUIState({ running: !!block, startTimeIso: block ? block.TimestampStarted : null });
+      cardContext = await t.card('id','name','desc','shortLink');
+      document.getElementById('card-title').textContent = cardContext.name || 'Untitled';
+      document.getElementById('card-sub').textContent = 'card • ' + (cardContext.shortLink || '');
 
-      // NOTE: With the trigger model, live summary data is not available.
-      // This data will be updated on the card description by the backend sync.
+      // detect running state from description block
+      const block = parseZxCBlock(cardContext.desc || '');
+      updateUIFromBlock(block);
+
+      // summary placeholders — backend will update the description with totals
       document.getElementById('total-time').textContent = '...';
       document.getElementById('entry-count').textContent = '...';
-      
+
       await t.sizeTo(document.body);
-    } catch (e) {
-      showError('Failed to render card details.');
+    } catch (err) {
+      showError('Failed to load card info.');
+      console.error(err);
     }
   });
 
   document.getElementById('startBtn').addEventListener('click', handleStartClick);
   document.getElementById('stopBtn').addEventListener('click', handleStopClick);
   window.addEventListener('unload', () => { if (liveInterval) clearInterval(liveInterval); });
+
 </script>
 </body>
 </html>
