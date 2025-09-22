@@ -17,40 +17,27 @@
     // =====================================================================
     TrelloPowerUp.initialize({
       // --- CARD BADGES CAPABILITY ---
-      'card-badges': function(t, options) {
-        return t.card('desc').then(function(card) {
-          if (!isTimerRunning(card.desc)) {
-            return []; // If no timer is running, return no badge
-          }
-          // This is a dynamic badge that will automatically update
+      'card-badges': function(t) {
+        return t.card('desc').then(card => {
+          const blockText = card.desc.split(ZXC_BLOCK_START)[1] || '';
+          const startTimeMatch = blockText.match(/TimestampStarted:\s*(.+)/);
+          if (!startTimeMatch) return [];
+
+          const startTime = new Date(startTimeMatch[1]);
+          const now = new Date();
+          const elapsedMs = now - startTime;
+
+          const hours = String(Math.floor(elapsedMs / 3600000)).padStart(2,'0');
+          const minutes = String(Math.floor((elapsedMs % 3600000) / 60000)).padStart(2,'0');
+          const seconds = String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2,'0');
+
           return [{
-            dynamic: function() {
-              return t.card('desc').then(function(refreshedCard) {
-                const blockText = refreshedCard.desc.split(ZXC_BLOCK_START)[1] || '';
-                const startTimeMatch = blockText.match(/TimestampStarted:\s*(.+)/);
-                
-                if (!startTimeMatch) {
-                  return { text: '⏱️ Error', color: 'red' };
-                }
-
-                const startTime = new Date(startTimeMatch[1]);
-                const now = new Date();
-                const elapsedMs = now - startTime;
-                
-                const hours = String(Math.floor(elapsedMs / 3600000)).padStart(2, '0');
-                const minutes = String(Math.floor((elapsedMs % 3600000) / 60000)).padStart(2, '0');
-                const seconds = String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0');
-
-                return {
-                  text: `⏱️ ${hours}:${minutes}:${seconds}`,
-                  color: 'green',
-                  refresh: 1 // Refresh every second
-                };
-              });
-            }
+            text: `⏱️ ${hours}:${minutes}:${seconds}`,
+            color: 'green',
+            refresh: 1
           }];
         });
-      },
+      }
 
       // --- CARD BACK SECTION CAPABILITY ---
       'card-back-section': function(t, options) {
@@ -68,3 +55,4 @@
   </script>
 </body>
 </html>
+
