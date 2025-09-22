@@ -1,34 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <base target="_top">
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <script src="https://p.trellocdn.com/power-up.min.js"></script>
-  <title>ZxC Timer</title>
-  <style>
-    :root{--bg:#ffffff;--muted:#6b7280;--accent:#0f766e;--accent-600:#0b6a64;--danger:#ef4444;--card-shadow:0 6px 18px rgba(15,23,42,0.06);--radius:10px;}
-    html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;background:transparent;color:#0f172a;-webkit-font-smoothing:antialiased;}
-    .container{padding:14px;width:320px;box-sizing:border-box;}
-    .card{background:var(--bg);border-radius:var(--radius);padding:12px;box-shadow:var(--card-shadow);border:1px solid rgba(15,23,42,0.04);}
-    .header{display:flex;gap:8px;align-items:center;justify-content:space-between;}
-    .title{display:flex;gap:10px;align-items:center;min-width:0;}
-    .project-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);flex:0 0 12px;box-shadow:0 1px 0 rgba(0,0,0,0.06) inset;}
-    .title h3{margin:0;font-size:14px;font-weight:600;line-height:1;color:#071133;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .subtitle{margin:0;font-size:12px;color:var(--muted);}
-    .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
-    .stat{background:linear-gradient(180deg,rgba(250,250,251,1),rgba(243,244,246,1));border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start;}
-    .stat .label{font-size:11px;color:var(--muted);}
-    .stat .value{font-size:15px;font-weight:700;color:#0f172a;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,"Roboto Mono","Courier New",monospace;}
-    .controls{display:flex;gap:8px;margin-top:12px;align-items:center;justify-content:space-between;}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:none;font-weight:600;cursor:pointer;font-size:13px;box-shadow:0 4px 12px rgba(2,6,23,0.06);}
-    .btn:disabled{opacity:0.7;cursor:wait;transform:none;box-shadow:none;}
-    .btn-start{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:white;}
-    .btn-stop{background:#fff;color:var(--danger);border:1px solid rgba(239,68,68,0.12);}
-    .running-dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.28);display:inline-block;vertical-align:middle;margin-right:6px;}
-    .small{font-size:12px;color:var(--muted);}
-    .error{margin-top:10px;background:#fff7f7;border:1px solid #ffdede;color:#7c0b0b;padding:8px;border-radius:8px;font-size:12px;}
-  </style>
+<meta charset="utf-8" />
+<base target="_top">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<title>ZxC Timer</title>
+<style>
+  :root{--bg:#ffffff;--muted:#6b7280;--accent:#0f766e;--accent-600:#0b6a64;--danger:#ef4444;--card-shadow:0 6px 18px rgba(15,23,42,0.06);--radius:10px;}
+  html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;background:transparent;color:#0f172a;-webkit-font-smoothing:antialiased;}
+  .container{padding:14px;width:320px;box-sizing:border-box;}
+  .card{background:var(--bg);border-radius:var(--radius);padding:12px;box-shadow:var(--card-shadow);border:1px solid rgba(15,23,42,0.04);}
+  .header{display:flex;gap:8px;align-items:center;justify-content:space-between;}
+  .title{display:flex;gap:10px;align-items:center;min-width:0;}
+  .project-dot{width:12px;height:12px;border-radius:50%;background:var(--accent);flex:0 0 12px;box-shadow:0 1px 0 rgba(0,0,0,0.06) inset;}
+  .title h3{margin:0;font-size:14px;font-weight:600;line-height:1;color:#071133;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .subtitle{margin:0;font-size:12px;color:var(--muted);}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .stat{background:linear-gradient(180deg,rgba(250,250,251,1),rgba(243,244,246,1));border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start;}
+  .stat .label{font-size:11px;color:var(--muted);}
+  .stat .value{font-size:15px;font-weight:700;color:#0f172a;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,"Roboto Mono","Courier New",monospace;}
+  .controls{display:flex;gap:8px;margin-top:12px;align-items:center;justify-content:space-between;}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:none;font-weight:600;cursor:pointer;font-size:13px;box-shadow:0 4px 12px rgba(2,6,23,0.06);}
+  .btn:disabled{opacity:0.7;cursor:wait;transform:none;box-shadow:none;}
+  .btn-start{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:white;}
+  .btn-stop{background:#fff;color:var(--danger);border:1px solid rgba(239,68,68,0.12);}
+  .running-dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.28);display:inline-block;vertical-align:middle;margin-right:6px;}
+  .small{font-size:12px;color:var(--muted);}
+  .error{margin-top:10px;background:#fff7f7;border:1px solid #ffdede;color:#7c0b0b;padding:8px;border-radius:8px;font-size:12px;display:none;}
+  .hint{margin-top:8px;font-size:11px;color:var(--muted);}
+</style>
 </head>
 <body>
   <div class="container">
@@ -43,6 +44,7 @@
         </div>
         <div id="state-indicator" class="small" aria-live="polite">Idle</div>
       </div>
+
       <div class="stats">
         <div class="stat">
           <div class="label">Total Logged</div>
@@ -53,105 +55,250 @@
           <div class="value" id="entry-count">0</div>
         </div>
       </div>
+
       <div class="controls">
-        <button id="startBtn" class="btn btn-start" title="Start timer"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg> <span id="startLabel">Start</span></button>
-        <button id="stopBtn" class="btn btn-stop" title="Stop timer" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 6h12v12H6z"/></svg> <span id="stopLabel">Stop</span></button>
+        <button id="startBtn" class="btn btn-start" title="Start timer" aria-label="Start timer">
+          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg> <span id="startLabel">Start</span>
+        </button>
+
+        <button id="stopBtn" class="btn btn-stop" title="Stop timer" style="display:none" aria-label="Stop timer">
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 6h12v12H6z"/></svg> <span id="stopLabel">Stop</span>
+        </button>
+
         <div id="live" class="small" aria-live="polite">—</div>
       </div>
-      <div id="error" class="error" style="display:none;"></div>
+
+      <div id="error" class="error"></div>
+      <div class="hint">Tip: Use the Start/Stop buttons — the backend will update the card description for persistence.</div>
     </div>
   </div>
 
-  <script>
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw7BOmy2vUZDZS6GS-MjVuXrjOK_Yt60cUHPwpBmCcRyilxOyl6GObn5I7JSSPmXEjZ/exec';
-    const ZXC_BLOCK_START = '--- ZxC Sync ---';
-    const t = TrelloPowerUp.iframe();
-    let cardContext = {}, liveInterval = null;
+<script>
+/*
+  JSONP-based Trello Power-Up card-back section.
+  - Replace WEB_APP_URL with your Apps Script exec URL (the /exec URL).
+  - The Apps Script must implement doGet JSONP handling and return JSONP callback.
+  - Backend should update the real Trello card description server-side; this UI stores a shared/local copy only.
+*/
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw7BOmy2vUZDZS6GS-MjVuXrjOK_Yt60cUHPwpBmCcRyilxOyl6GObn5I7JSSPmXEjZ/exec';
+const ZXC_BLOCK_START = '--- ZxC Sync ---';
+const ZXC_BLOCK_END = '--- /ZxC Sync ---';
 
-    // --- UTILITY: JSONP Networking to bypass CORS ---
-    function jsonpRpc(action, params) {
-      return new Promise((resolve, reject) => {
-        const callbackName = 'zxc_jsonp_cb_' + Date.now() + Math.random().toString(36).slice(2);
-        const urlParams = new URLSearchParams({ action, callback: callbackName, ...params });
-        const script = document.createElement('script');
-        script.src = `${WEB_APP_URL}?${urlParams.toString()}`;
+const t = TrelloPowerUp.iframe();
+let cardContext = { id:null, name:null, desc:null, shortLink:null };
+let liveInterval = null;
 
-        window[callbackName] = (response) => {
-          delete window[callbackName];
-          document.head.removeChild(script);
-          resolve(response);
-        };
-        script.onerror = () => {
-          delete window[callbackName];
-          document.head.removeChild(script);
-          reject(new Error('JSONP network request failed.'));
-        };
-        document.head.appendChild(script);
-      });
+// ---------- JSONP helper ----------
+function jsonpRpc(action, params = {}, timeout = 10000) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'zxc_cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const qs = new URLSearchParams(Object.assign({ action, callback: cbName }, params)).toString();
+    const script = document.createElement('script');
+    script.src = `${WEB_APP_URL}?${qs}`;
+    script.async = true;
+
+    let timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('JSONP timeout'));
+    }, timeout);
+
+    function cleanup() {
+      clearTimeout(timer);
+      script.onerror = null;
+      script.onload = null;
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try { delete window[cbName]; } catch(e) { window[cbName] = undefined; }
     }
 
-    // --- UTILITY: UI and Data Formatting ---
-    function formatTime(totalSeconds){const h=String(Math.floor(totalSeconds/3600)).padStart(2,'0');const m=String(Math.floor((totalSeconds%3600)/60)).padStart(2,'0');const s=String(Math.floor(totalSeconds%60)).padStart(2,'0');return `${h}:${m}:${s}`;}
-    function displayError(msg){const el=document.getElementById('error');el.textContent=msg;el.style.display=msg?'block':'none';}
-    function setLoadingState(isLoading){document.getElementById('startBtn').disabled=isLoading;document.getElementById('stopBtn').disabled=isLoading;}
-    function startLiveTimer(startTimeIso){if(liveInterval)clearInterval(liveInterval);liveInterval=setInterval(()=>{const delta=Math.floor((Date.now()-new Date(startTimeIso).getTime())/1000);document.getElementById('live').textContent='Elapsed: '+formatTime(delta)},1000);}
-    function stopLiveTimer(){if(liveInterval)clearInterval(liveInterval);document.getElementById('live').textContent='—';}
-    function parseZxCBlock(text){if(!text)return null;const start=text.indexOf(ZXC_BLOCK_START);if(start===-1)return null;const inner=text.substring(start+ZXC_BLOCK_START.length).trim();const obj={};inner.split(/\r?\n/).forEach(l=>{const m=l.match(/^([\w]+):\s*(.+)$/);if(m)obj[m[1]]=m[2]});return obj}
-    function updateUI(state){const isRunning=state.running;document.getElementById('startBtn').style.display=isRunning?'none':'inline-flex';document.getElementById('stopBtn').style.display=isRunning?'inline-flex':'none';document.getElementById('state-indicator').innerHTML=isRunning?'<span class="running-dot"></span>Running':'Idle';if(isRunning&&state.startTimeIso){startLiveTimer(state.startTimeIso)}else{stopLiveTimer()}}
+    window[cbName] = (resp) => {
+      cleanup();
+      resolve(resp);
+    };
 
-    // --- EVENT HANDLERS ---
-    async function handleStart() {
-      setLoadingState(true);
-      displayError('');
-      const board = await t.board('name');
-      const params = { source: 'trello', entityId: cardContext.id, title: cardContext.name, description: cardContext.desc, boardName: board.name };
-      const resp = await jsonpRpc('start', params);
-      if (resp.success) {
-        await t.set('card', 'shared', 'desc', resp.newDescription);
-        t.render(); // Re-render the iframe to reflect the new state
-      } else {
-        displayError(resp.message || 'Failed to start timer.');
-      }
-      setLoadingState(false);
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('JSONP network error'));
+    };
+
+    document.head.appendChild(script);
+  });
+}
+
+// ---------- Utilities ----------
+function formatTime(totalSeconds) {
+  const h = String(Math.floor(totalSeconds / 3600)).padStart(2,'0');
+  const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2,'0');
+  const s = String(Math.floor(totalSeconds % 60)).padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+function showError(msg) {
+  const el = document.getElementById('error');
+  if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+function setLoading(isLoading) {
+  document.getElementById('startBtn').disabled = isLoading;
+  document.getElementById('stopBtn').disabled = isLoading;
+}
+
+// parse the ZxC block in the card description
+function parseZxCBlock(text) {
+  if (!text) return null;
+  const s = text.indexOf(ZXC_BLOCK_START);
+  const e = text.indexOf(ZXC_BLOCK_END);
+  if (s === -1 || e === -1) return null;
+  const inner = text.substring(s + ZXC_BLOCK_START.length, e).trim();
+  const out = {};
+  inner.split(/\r?\n/).forEach(line => {
+    const m = line.match(/^([\w]+):\s*(.+)$/);
+    if (m) out[m[1]] = m[2];
+  });
+  return out;
+}
+
+// update UI state (running: true/false, startTimeIso optional)
+function updateUIState({ running=false, startTimeIso=null }) {
+  document.getElementById('startBtn').style.display = running ? 'none' : 'inline-flex';
+  document.getElementById('stopBtn').style.display = running ? 'inline-flex' : 'none';
+  document.getElementById('state-indicator').innerHTML = running ? '<span class="running-dot"></span>Running' : 'Idle';
+  if (running && startTimeIso) startLiveTimer(startTimeIso); else stopLiveTimer();
+}
+
+function startLiveTimer(startIso) {
+  stopLiveTimer();
+  if (!startIso) return;
+  liveInterval = setInterval(() => {
+    const delta = Math.floor((Date.now() - new Date(startIso).getTime()) / 1000);
+    document.getElementById('live').textContent = 'Elapsed: ' + formatTime(delta);
+  }, 1000);
+}
+function stopLiveTimer() {
+  if (liveInterval) { clearInterval(liveInterval); liveInterval = null; }
+  document.getElementById('live').textContent = '—';
+}
+
+// ---------- Handlers ----------
+async function handleStartClick() {
+  setLoading(true);
+  showError('');
+  try {
+    const board = await t.board('name');
+    const params = {
+      source: 'trello',
+      entityId: cardContext.id,
+      title: cardContext.name || '',
+      description: cardContext.desc || '',
+      boardName: board && board.name ? board.name : ''
+    };
+    const resp = await jsonpRpc('start', params);
+    if (!resp || !resp.success) {
+      showError(resp && resp.message ? resp.message : 'Failed to start timer.');
+      setLoading(false);
+      return;
     }
-    async function handleStop() {
-      setLoadingState(true);
-      displayError('');
-      const params = { entityId: cardContext.id, description: cardContext.desc };
-      const resp = await jsonpRpc('stop', params);
-      if (resp.success) {
-        await t.set('card', 'shared', 'desc', resp.cleanedDescription);
-        t.render(); // Re-render the iframe to reflect the new state
-      } else {
-        displayError(resp.message || 'Failed to stop timer.');
-      }
-      setLoadingState(false);
-    }
-    
-    // --- INITIAL RENDER ---
-    t.render(async function() {
+    // backend returns newDescription (with ZxC block). We store it in Power-Up shared storage for recovery/viewing.
+    if (resp.newDescription) {
       try {
-        cardContext = await t.card('id', 'name', 'desc', 'shortLink');
-        document.getElementById('card-title').textContent = cardContext.name;
-        document.getElementById('card-sub').textContent = 'card • ' + cardContext.shortLink;
-        
-        const block = parseZxCBlock(cardContext.desc);
-        updateUI({ running: !!block, startTimeIso: block ? block.TimestampStarted : null });
-
-        const summaryResp = await jsonpRpc('getSummary', { entityId: cardContext.id });
-        if (summaryResp.success && summaryResp.summary) {
-          document.getElementById('total-time').textContent = formatTime(summaryResp.summary.totalDurationSeconds);
-          document.getElementById('entry-count').textContent = summaryResp.summary.entryCount;
-        }
-        await t.sizeTo(document.body);
-      } catch (err) {
-        displayError('Failed to load card context.');
+        await t.set('card','shared','zxc_description', resp.newDescription);
+        cardContext.desc = resp.newDescription;
+      } catch(e) {
+        // silently continue — storage may fail in some contexts
+        console.warn('Unable to write shared storage:', e && e.message);
+        cardContext.desc = resp.newDescription;
       }
-    });
+    }
+    updateUIState({ running: true, startTimeIso: resp.timestamp || (resp.newBlock && resp.newBlock.TimestampStarted) || new Date().toISOString() });
+    // update summary if provided
+    if (resp.summary) {
+      document.getElementById('total-time').textContent = formatTime(resp.summary.totalDurationSeconds || 0);
+      document.getElementById('entry-count').textContent = resp.summary.entryCount || 0;
+    }
+  } catch (err) {
+    showError(err && err.message ? err.message : 'Unexpected error starting timer.');
+  } finally {
+    setLoading(false);
+  }
+}
 
-    document.getElementById('startBtn').addEventListener('click', handleStart);
-    document.getElementById('stopBtn').addEventListener('click', handleStop);
-    window.addEventListener('unload', () => { if (liveInterval) clearInterval(liveInterval); });
-  </script>
+async function handleStopClick() {
+  setLoading(true);
+  showError('');
+  try {
+    const params = {
+      entityId: cardContext.id,
+      description: cardContext.desc || ''
+    };
+    const resp = await jsonpRpc('stop', params);
+    if (!resp || !resp.success) {
+      showError(resp && resp.message ? resp.message : 'Failed to stop timer.');
+      setLoading(false);
+      return;
+    }
+    // backend may return cleanedDescription. store in shared storage
+    if (resp.cleanedDescription) {
+      try {
+        await t.set('card','shared','zxc_description', resp.cleanedDescription);
+        cardContext.desc = resp.cleanedDescription;
+      } catch(e) {
+        console.warn('Unable to write shared storage:', e && e.message);
+        cardContext.desc = resp.cleanedDescription;
+      }
+    }
+    updateUIState({ running: false });
+    if (resp.summary) {
+      document.getElementById('total-time').textContent = formatTime(resp.summary.totalDurationSeconds || 0);
+      document.getElementById('entry-count').textContent = resp.summary.entryCount || 0;
+    }
+  } catch (err) {
+    showError(err && err.message ? err.message : 'Unexpected error stopping timer.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ---------- Initial render ----------
+t.render(async () => {
+  try {
+    // read card context
+    const card = await t.card('id','name','desc','shortLink');
+    cardContext = card || {};
+    document.getElementById('card-title').textContent = cardContext.name || 'Untitled';
+    document.getElementById('card-sub').textContent = 'card • ' + (cardContext.shortLink || '');
+
+    // Try to read any previously stored shared description (fallback)
+    try {
+      const sharedDesc = await t.get('card','shared','zxc_description');
+      if (sharedDesc) cardContext.desc = sharedDesc;
+    } catch(e) {
+      // ignore
+    }
+
+    // detect running status from description block
+    const block = parseZxCBlock(cardContext.desc || card.desc || '');
+    if (block && block.ClockifyTimeEntryID) {
+      updateUIState({ running: true, startTimeIso: block.TimestampStarted || null });
+    } else {
+      updateUIState({ running: false });
+    }
+
+    // fetch summary (JSONP)
+    const summaryResp = await jsonpRpc('getSummary', { entityId: cardContext.id });
+    if (summaryResp && summaryResp.success && summaryResp.summary) {
+      document.getElementById('total-time').textContent = formatTime(summaryResp.summary.totalDurationSeconds || 0);
+      document.getElementById('entry-count').textContent = summaryResp.summary.entryCount || 0;
+    }
+
+    await t.sizeTo(document.body);
+  } catch (err) {
+    showError('Failed to initialize Power-Up. ' + (err && err.message ? err.message : ''));
+  }
+});
+
+// ---------- Wire buttons ----------
+document.getElementById('startBtn').addEventListener('click', handleStartClick);
+document.getElementById('stopBtn').addEventListener('click', handleStopClick);
+window.addEventListener('unload', () => { if (liveInterval) clearInterval(liveInterval); });
+</script>
 </body>
 </html>
