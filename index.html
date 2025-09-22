@@ -4,19 +4,8 @@
   <title>ZxC Clockify Power-Up</title>
   <script src="https://p.trellocdn.com/power-up.min.js"></script>
   <style>
-    /* Basic styling for our button */
-    button {
-      background-color: #0079BF;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 3px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      background-color: #02609F;
-    }
+    button { background-color: #0079BF; color: white; border: none; padding: 8px 12px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+    button:hover { background-color: #02609F; }
   </style>
 </head>
 <body>
@@ -24,34 +13,25 @@
     // =====================================================================
     //                            CONFIGURATION
     // =====================================================================
-    const WEB_APP_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+    // Your live Web App URL is now included below:
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfupLevT0gpSUXgQnikEdiSWg_PWIsI7_Vti3zvJdGfdEcx8450CbldRpsmJNhe7g/exec';
     const ZXC_BLOCK_START = '--- ZxC Sync ---';
 
     // =====================================================================
     //                            POWER-UP LOGIC
     // =====================================================================
     
-    // Helper to determine if a timer is running based on the card description
-    const isTimerRunning = (desc) => {
-      return desc && desc.includes(ZXC_BLOCK_START);
-    };
+    const isTimerRunning = (desc) => desc && desc.includes(ZXC_BLOCK_START);
 
-    // The main function that gets called when the user clicks our card button
     const handleCardButtonClick = async (t, options) => {
       try {
         const card = await t.card('name', 'desc', 'id');
         const board = await t.board('name');
         const user = await t.member('email');
-
-        // Determine if we need to start or stop the timer
         const action = isTimerRunning(card.desc) ? 'stop' : 'start';
 
-        t.showNotification({
-          message: `Sending ${action} command...`,
-          duration: 3
-        });
+        t.showNotification({ message: `Sending ${action} command...`, duration: 3 });
 
-        // Prepare the payload for our backend
         const payload = {
           action: action,
           userEmail: user.email,
@@ -62,37 +42,40 @@
           boardName: board.name
         };
 
-        // Call our Apps Script backend
+        // --- LIVE FETCH LOGIC ---
         const response = await fetch(WEB_APP_URL, {
           method: 'POST',
-          mode: 'no-cors', // Required for simple Apps Script web app calls
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          t.showNotification({ message: `Timer ${action} successful!`, duration: 4 });
+          // If the backend sent back an updated description, update the card
+          if (result.newDescription || result.cleanedDescription) {
+            const descriptionToSet = result.newDescription || result.cleanedDescription;
+            return t.set('card', 'shared', 'desc', descriptionToSet);
+          }
+        } else {
+          // Show the specific error message from our backend
+          t.alert({ message: `Error: ${result.message}`, duration: 10 });
+        }
         
-        // Because of 'no-cors', we can't read the response directly.
-        // We'll just refresh the card to see the updated description from the backend.
-        // For a more advanced Power-Up, we'd handle the response properly.
-        t.showNotification({
-          message: `Clockify command sent! Refreshing card...`,
-          duration: 3
-        });
-
-        // This is a simple way to reflect the change; a full implementation
-        // would use the response to update the description.
-        // For now, let's just close the popup.
-        return t.closePopup();
-
       } catch (error) {
-        console.error('Power-Up Error:', error);
+        console.error('Power-Up Fetch Error:', error);
         t.alert({
-          message: 'An error occurred. Please check the console.',
-          duration: 5,
+          message: 'A critical error occurred. Please check the browser console for details (F12).',
+          duration: 10,
         });
       }
     };
     
-    // Trello Power-Up Initialization
     TrelloPowerUp.initialize({
       'card-buttons': function(t, options) {
         return t.card('desc').then(function(card) {
@@ -106,7 +89,6 @@
         });
       }
     });
-
   </script>
 </body>
 </html>
