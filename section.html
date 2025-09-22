@@ -25,7 +25,6 @@
     .btn:disabled{opacity:0.7;cursor:wait;transform:none;box-shadow:none;}
     .btn-start{background:linear-gradient(180deg,var(--accent),var(--accent-600));color:white;}
     .btn-stop{background:#fff;color:var(--danger);border:1px solid rgba(239,68,68,0.12);}
-    .status{font-size:12px;color:var(--muted);}
     .running-dot{width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,0.28);display:inline-block;vertical-align:middle;margin-right:6px;}
     .small{font-size:12px;color:var(--muted);}
     .error{margin-top:10px;background:#fff7f7;border:1px solid #ffdede;color:#7c0b0b;padding:8px;border-radius:8px;font-size:12px;}
@@ -64,134 +63,90 @@
   </div>
 
   <script>
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw7BOmy2vUZDZS6GS-MjVuXrjOK_Yt60cUHPwpBmCcRyilxOyl6GObn5I7JSSPmXEjZ/exec';
+    const WEB_APP_URL = 'YOUR_LATEST_WEB_APP_URL_HERE';
     const ZXC_BLOCK_START = '--- ZxC Sync ---';
-    const ZXC_BLOCK_END = '--- /ZxC Sync ---';
-    
     const t = TrelloPowerUp.iframe();
-    let cardContext = { id: null, name: null, desc: null, shortLink: null };
-    let liveInterval = null;
+    let cardContext = {}, liveInterval = null;
 
-    // --- UTILITY FUNCTIONS ---
-    function formatTime(totalSeconds){
-      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-      const seconds = String(Math.floor(totalSeconds % 60)).padStart(2, '0');
-      return `${hours}:${minutes}:${seconds}`;
-    }
-    function displayError(msg){
-      const el = document.getElementById('error');
-      el.textContent = msg;
-      el.style.display = msg ? 'block' : 'none';
-    }
-    function setLoadingState(isLoading){
-      document.getElementById('startBtn').disabled = isLoading;
-      document.getElementById('stopBtn').disabled = isLoading;
-    }
-    function startLiveTimer(startTimeIso) {
-        if (liveInterval) clearInterval(liveInterval);
-        liveInterval = setInterval(() => {
-            const delta = Math.floor((Date.now() - new Date(startTimeIso).getTime()) / 1000);
-            document.getElementById('live').textContent = 'Elapsed: ' + formatTime(delta);
-        }, 1000);
-    }
-    function stopLiveTimer(){
-      if (liveInterval) clearInterval(liveInterval);
-      document.getElementById('live').textContent = '—';
-    }
-    async function rpc(action, payload) {
-        return fetch(WEB_APP_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action, ...payload }),
-        }).then(res => res.json());
-    }
-    function parseZxCBlock(text) {
-        if (!text) return null;
-        const start = text.indexOf(ZXC_BLOCK_START);
-        const end = text.indexOf(ZXC_BLOCK_END);
-        if (start === -1 || end === -1) return null;
-        const inner = text.substring(start + ZXC_BLOCK_START.length, end).trim();
-        const obj = {};
-        inner.split(/\r?\n/).forEach(l => {
-            const m = l.match(/^([\w]+):\s*(.+)$/);
-            if (m) obj[m[1]] = m[2];
-        });
-        return obj;
+    // --- UTILITY: JSONP Networking to bypass CORS ---
+    function jsonpRpc(action, params) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'zxc_jsonp_cb_' + Date.now() + Math.random().toString(36).slice(2);
+        const urlParams = new URLSearchParams({ action, callback: callbackName, ...params });
+        const script = document.createElement('script');
+        script.src = `${WEB_APP_URL}?${urlParams.toString()}`;
+
+        window[callbackName] = (response) => {
+          delete window[callbackName];
+          document.head.removeChild(script);
+          resolve(response);
+        };
+        script.onerror = () => {
+          delete window[callbackName];
+          document.head.removeChild(script);
+          reject(new Error('JSONP network request failed.'));
+        };
+        document.head.appendChild(script);
+      });
     }
 
-    // --- UI UPDATE FUNCTION ---
-    function updateUI(state) {
-        const isRunning = state.running;
-        document.getElementById('startBtn').style.display = isRunning ? 'none' : 'inline-flex';
-        document.getElementById('stopBtn').style.display = isRunning ? 'inline-flex' : 'none';
-        document.getElementById('state-indicator').innerHTML = isRunning ? '<span class="running-dot"></span>Running' : 'Idle';
-        if (isRunning && state.startTimeIso) {
-            startLiveTimer(state.startTimeIso);
-        } else {
-            stopLiveTimer();
-        }
-    }
-    
+    // --- UTILITY: UI and Data Formatting ---
+    function formatTime(totalSeconds){const h=String(Math.floor(totalSeconds/3600)).padStart(2,'0');const m=String(Math.floor((totalSeconds%3600)/60)).padStart(2,'0');const s=String(Math.floor(totalSeconds%60)).padStart(2,'0');return `${h}:${m}:${s}`;}
+    function displayError(msg){const el=document.getElementById('error');el.textContent=msg;el.style.display=msg?'block':'none';}
+    function setLoadingState(isLoading){document.getElementById('startBtn').disabled=isLoading;document.getElementById('stopBtn').disabled=isLoading;}
+    function startLiveTimer(startTimeIso){if(liveInterval)clearInterval(liveInterval);liveInterval=setInterval(()=>{const delta=Math.floor((Date.now()-new Date(startTimeIso).getTime())/1000);document.getElementById('live').textContent='Elapsed: '+formatTime(delta)},1000);}
+    function stopLiveTimer(){if(liveInterval)clearInterval(liveInterval);document.getElementById('live').textContent='—';}
+    function parseZxCBlock(text){if(!text)return null;const start=text.indexOf(ZXC_BLOCK_START);if(start===-1)return null;const inner=text.substring(start+ZXC_BLOCK_START.length).trim();const obj={};inner.split(/\r?\n/).forEach(l=>{const m=l.match(/^([\w]+):\s*(.+)$/);if(m)obj[m[1]]=m[2]});return obj}
+    function updateUI(state){const isRunning=state.running;document.getElementById('startBtn').style.display=isRunning?'none':'inline-flex';document.getElementById('stopBtn').style.display=isRunning?'inline-flex':'none';document.getElementById('state-indicator').innerHTML=isRunning?'<span class="running-dot"></span>Running':'Idle';if(isRunning&&state.startTimeIso){startLiveTimer(state.startTimeIso)}else{stopLiveTimer()}}
+
     // --- EVENT HANDLERS ---
     async function handleStart() {
-        setLoadingState(true);
-        displayError('');
-        const board = await t.board('name');
-        const payload = { source: 'trello', entityId: cardContext.id, title: cardContext.name, description: cardContext.desc, boardName: board.name };
-        const resp = await rpc('start', payload);
-
-        if (resp.success) {
-            await t.set('card', 'shared', 'desc', resp.newDescription);
-            cardContext.desc = resp.newDescription; // Update local context
-            updateUI({ running: true, startTimeIso: new Date().toISOString() });
-        } else {
-            displayError(resp.message || 'Failed to start timer.');
-        }
-        setLoadingState(false);
+      setLoadingState(true);
+      displayError('');
+      const board = await t.board('name');
+      const params = { source: 'trello', entityId: cardContext.id, title: cardContext.name, description: cardContext.desc, boardName: board.name };
+      const resp = await jsonpRpc('start', params);
+      if (resp.success) {
+        await t.set('card', 'shared', 'desc', resp.newDescription);
+        t.render(); // Re-render the iframe to reflect the new state
+      } else {
+        displayError(resp.message || 'Failed to start timer.');
+      }
+      setLoadingState(false);
     }
     async function handleStop() {
-        setLoadingState(true);
-        displayError('');
-        const payload = { source: 'trello', entityId: cardContext.id, description: cardContext.desc };
-        const resp = await rpc('stop', payload);
-
-        if (resp.success) {
-            await t.set('card', 'shared', 'desc', resp.cleanedDescription);
-            cardContext.desc = resp.cleanedDescription; // Update local context
-            updateUI({ running: false });
-        } else {
-            displayError(resp.message || 'Failed to stop timer.');
-        }
-        setLoadingState(false);
+      setLoadingState(true);
+      displayError('');
+      const params = { entityId: cardContext.id, description: cardContext.desc };
+      const resp = await jsonpRpc('stop', params);
+      if (resp.success) {
+        await t.set('card', 'shared', 'desc', resp.cleanedDescription);
+        t.render(); // Re-render the iframe to reflect the new state
+      } else {
+        displayError(resp.message || 'Failed to stop timer.');
+      }
+      setLoadingState(false);
     }
     
     // --- INITIAL RENDER ---
     t.render(async function() {
-        try {
-            cardContext = await t.card('id', 'name', 'desc', 'shortLink');
-            document.getElementById('card-title').textContent = cardContext.name;
-            document.getElementById('card-sub').textContent = 'card • ' + cardContext.shortLink;
+      try {
+        cardContext = await t.card('id', 'name', 'desc', 'shortLink');
+        document.getElementById('card-title').textContent = cardContext.name;
+        document.getElementById('card-sub').textContent = 'card • ' + cardContext.shortLink;
+        
+        const block = parseZxCBlock(cardContext.desc);
+        updateUI({ running: !!block, startTimeIso: block ? block.TimestampStarted : null });
 
-            // Check initial timer state from the description
-            const block = parseZxCBlock(cardContext.desc);
-            if (block && block.ClockifyTimeEntryID) {
-                updateUI({ running: true, startTimeIso: block.TimestampStarted });
-            } else {
-                updateUI({ running: false });
-            }
-
-            // Fetch summary data from backend
-            const summaryResp = await rpc('getSummary', { entityId: cardContext.id });
-            if (summaryResp.success && summaryResp.summary) {
-                document.getElementById('total-time').textContent = formatTime(summaryResp.summary.totalDurationSeconds);
-                document.getElementById('entry-count').textContent = summaryResp.summary.entryCount;
-            }
-
-            await t.sizeTo(document.body); // Auto-resize iframe to content
-        } catch (err) {
-            displayError('Failed to load card context.');
+        const summaryResp = await jsonpRpc('getSummary', { entityId: cardContext.id });
+        if (summaryResp.success && summaryResp.summary) {
+          document.getElementById('total-time').textContent = formatTime(summaryResp.summary.totalDurationSeconds);
+          document.getElementById('entry-count').textContent = summaryResp.summary.entryCount;
         }
+        await t.sizeTo(document.body);
+      } catch (err) {
+        displayError('Failed to load card context.');
+      }
     });
 
     document.getElementById('startBtn').addEventListener('click', handleStart);
