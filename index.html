@@ -1,99 +1,70 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ZxC Clockify Power-Up</title>
+  <title>ZxC Clockify Power-Up Connector</title>
   <script src="https://p.trellocdn.com/power-up.min.js"></script>
-  <style>
-    button { background-color: #0079BF; color: white; border: none; padding: 8px 12px; border-radius: 3px; cursor: pointer; font-weight: bold; }
-    button:hover { background-color: #02609F; }
-  </style>
 </head>
 <body>
   <script>
     // =====================================================================
     //                            CONFIGURATION
     // =====================================================================
-    // Your live Web App URL is now included below:
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzfupLevT0gpSUXgQnikEdiSWg_PWIsI7_Vti3zvJdGfdEcx8450CbldRpsmJNhe7g/exec';
     const ZXC_BLOCK_START = '--- ZxC Sync ---';
-
-    // =====================================================================
-    //                            POWER-UP LOGIC
-    // =====================================================================
-    
     const isTimerRunning = (desc) => desc && desc.includes(ZXC_BLOCK_START);
 
-    const handleCardButtonClick = async (t, options) => {
-      try {
-        const card = await t.card('name', 'desc', 'id');
-        const board = await t.board('name');
-        const user = await t.member('email');
-        const action = isTimerRunning(card.desc) ? 'stop' : 'start';
-
-        t.showNotification({ message: `Sending ${action} command...`, duration: 3 });
-
-        const payload = {
-          action: action,
-          userEmail: user.email,
-          source: 'trello',
-          entityId: card.id,
-          title: card.name,
-          description: card.desc,
-          boardName: board.name
-        };
-
-        // --- LIVE FETCH LOGIC ---
-        const response = await fetch(WEB_APP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-
-        if (result.success) {
-          t.showNotification({ message: `Timer ${action} successful!`, duration: 4 });
-          // If the backend sent back an updated description, update the card
-          if (result.newDescription || result.cleanedDescription) {
-            const descriptionToSet = result.newDescription || result.cleanedDescription;
-            return t.set('card', 'shared', 'desc', descriptionToSet);
-          }
-        } else {
-          // Show the specific error message from our backend
-          t.alert({ message: `Error: ${result.message}`, duration: 10 });
-        }
-        
-      } catch (error) {
-        console.error('Power-Up Fetch Error:', error);
-        t.alert({
-          message: 'A critical error occurred. Please check the browser console for details (F12).',
-          duration: 10,
-        });
-      }
-    };
-    
+    // =====================================================================
+    //                 Trello Power-Up Initialization
+    // =====================================================================
     TrelloPowerUp.initialize({
-     'card-buttons': function(t, options) { /* ... your existing button code ... */ },
-     'card-badges': function(t, options) { /* ... your existing badge code ... */ },
+      // --- CARD BADGES CAPABILITY ---
+      'card-badges': function(t, options) {
+        return t.card('desc').then(function(card) {
+          if (!isTimerRunning(card.desc)) {
+            return []; // If no timer is running, return no badge
+          }
+          // This is a dynamic badge that will automatically update
+          return [{
+            dynamic: function() {
+              return t.card('desc').then(function(refreshedCard) {
+                const blockText = refreshedCard.desc.split(ZXC_BLOCK_START)[1] || '';
+                const startTimeMatch = blockText.match(/TimestampStarted:\s*(.+)/);
+                
+                if (!startTimeMatch) {
+                  return { text: '⏱️ Error', color: 'red' };
+                }
 
-     // --- NEW: CARD BACK SECTION CAPABILITY ---
-     'card-back-section': function(t, options) {
-       return {
-         title: 'Clockify Time Summary',
-         icon: 'https://clockify.me/assets/images/clockify-logo-white-email.png',
-         content: {
-           type: 'iframe',
-           url: t.signUrl('./section.html'), // Points to our new section file
-           height: 100 
-         }
-       };
-     }
-   });
+                const startTime = new Date(startTimeMatch[1]);
+                const now = new Date();
+                const elapsedMs = now - startTime;
+                
+                const hours = String(Math.floor(elapsedMs / 3600000)).padStart(2, '0');
+                const minutes = String(Math.floor((elapsedMs % 3600000) / 60000)).padStart(2, '0');
+                const seconds = String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2, '0');
+
+                return {
+                  text: `⏱️ ${hours}:${minutes}:${seconds}`,
+                  color: 'green',
+                  refresh: 1 // Refresh every second
+                };
+              });
+            }
+          }];
+        });
+      },
+
+      // --- CARD BACK SECTION CAPABILITY ---
+      'card-back-section': function(t, options) {
+        return {
+          title: 'Clockify Time Summary',
+          icon: 'https://clockify.me/assets/images/clockify-logo-white-email.png',
+          content: {
+            type: 'iframe',
+            url: t.signUrl('./section.html'), // Points to our dashboard file
+            height: 180 // Adjusted height for the new UI
+          }
+        };
+      }
+    });
   </script>
 </body>
 </html>
-
