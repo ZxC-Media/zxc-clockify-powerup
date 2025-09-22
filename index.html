@@ -77,18 +77,23 @@
     };
     
     TrelloPowerUp.initialize({
-      'card-buttons': function(t, options) {
-        return t.card('desc').then(function(card) {
-          const isRunning = isTimerRunning(card.desc);
-          return [{
-            icon: 'https://clockify.me/assets/images/clockify-logo-white-email.png',
-            text: isRunning ? 'Stop Timer' : 'Start Timer',
-            callback: handleCardButtonClick,
-            condition: 'edit'
-          }];
-        });
-      }
-    });
+     'card-buttons': function(t, options) { /* ... your existing button code ... */ },
+     'card-badges': function(t, options) { /* ... your existing badge code ... */ },
+
+     // --- NEW: CARD BACK SECTION CAPABILITY ---
+     'card-back-section': function(t, options) {
+       return {
+         title: 'Clockify Time Summary',
+         icon: 'https://clockify.me/assets/images/clockify-logo-white-email.png',
+         content: {
+           type: 'iframe',
+           url: t.signUrl('./section.html'), // Points to our new section file
+           height: 100 
+         }
+       };
+     }
+   });
   </script>
 </body>
 </html>
+
