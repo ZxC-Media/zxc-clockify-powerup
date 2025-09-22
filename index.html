@@ -3,51 +3,77 @@
 <head>
   <title>ZxC Clockify Power-Up Connector</title>
   <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <meta charset="utf-8" />
 </head>
 <body>
   <script>
-    // =====================================================================
-    //                            CONFIGURATION
-    // =====================================================================
     const ZXC_BLOCK_START = '--- ZxC Sync ---';
-    const isTimerRunning = (desc) => desc && desc.includes(ZXC_BLOCK_START);
+    const ZXC_BLOCK_END = '--- /ZxC Sync ---';
 
-    // =====================================================================
-    //                 Trello Power-Up Initialization
-    // =====================================================================
+    // Parse the ZxC block from the card description (defensive)
+    function parseZxCBlock(desc) {
+      if (!desc) return null;
+      const s = desc.indexOf(ZXC_BLOCK_START);
+      const e = desc.indexOf(ZXC_BLOCK_END);
+      if (s === -1 || e === -1) return null;
+      const inner = desc.substring(s + ZXC_BLOCK_START.length, e).trim();
+      const obj = {};
+      inner.split(/\r?\n/).forEach(line => {
+        const m = line.match(/^([\w]+):\s*(.+)$/);
+        if (m) obj[m[1]] = m[2];
+      });
+      return obj;
+    }
+
+    // Safe format helper
+    function formatTimeFromDiff(diffMs) {
+      if (diffMs < 0) diffMs = 0;
+      const s = Math.floor(diffMs / 1000);
+      const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+      const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+      const ss = String(s % 60).padStart(2, '0');
+      return `${hh}:${mm}:${ss}`;
+    }
+
     TrelloPowerUp.initialize({
-      // --- CARD BADGES CAPABILITY ---
-      'card-badges': function(t) {
+      // Card badge — shows live elapsed time if the ZxC block exists in desc
+      'card-badges': function(t, options){
         return t.card('desc').then(card => {
-          const blockText = card.desc.split(ZXC_BLOCK_START)[1] || '';
-          const startTimeMatch = blockText.match(/TimestampStarted:\s*(.+)/);
-          if (!startTimeMatch) return [];
+          const block = parseZxCBlock(card.desc || '');
+          if (!block || !block.TimestampStarted) return [];
 
-          const startTime = new Date(startTimeMatch[1]);
-          const now = new Date();
-          const elapsedMs = now - startTime;
-
-          const hours = String(Math.floor(elapsedMs / 3600000)).padStart(2,'0');
-          const minutes = String(Math.floor((elapsedMs % 3600000) / 60000)).padStart(2,'0');
-          const seconds = String(Math.floor((elapsedMs % 60000) / 1000)).padStart(2,'0');
-
+          // return a single dynamic badge that updates every second
           return [{
-            text: `⏱️ ${hours}:${minutes}:${seconds}`,
-            color: 'green',
-            refresh: 1
+            dynamic: function() {
+              return t.card('desc').then(refCard => {
+                const refBlock = parseZxCBlock(refCard.desc || '');
+                if (!refBlock || !refBlock.TimestampStarted) {
+                  return { text: '⏱️ —:—:—', color: 'gray' };
+                }
+                const start = Date.parse(refBlock.TimestampStarted);
+                if (isNaN(start)) return { text: '⏱️ Error', color: 'red' };
+                const elapsed = Date.now() - start;
+                return {
+                  text: `⏱️ ${formatTimeFromDiff(elapsed)}`,
+                  color: 'green',
+                  refresh: 1 // refresh every second
+                };
+              }).catch(() => ({ text: '⏱️ —:—:—', color: 'gray' }));
+            }
           }];
-        });
-      }
+        }).catch(()=>[]);
+      },
 
-      // --- CARD BACK SECTION CAPABILITY ---
+      // Card back section — iframe content
       'card-back-section': function(t, options) {
         return {
-          title: 'Clockify Time Summary',
+          title: 'Clockify Time',
           icon: 'https://clockify.me/assets/images/clockify-logo-white-email.png',
           content: {
             type: 'iframe',
-            url: t.signUrl('./section.html'), // Points to our dashboard file
-            height: 180 // Adjusted height for the new UI
+            // points to section.html in the same folder; Trello will sign this URL
+            url: t.signUrl('./section.html'),
+            height: 260
           }
         };
       }
@@ -55,4 +81,3 @@
   </script>
 </body>
 </html>
-
